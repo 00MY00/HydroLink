@@ -90,13 +90,15 @@ class ServiceTest extends TestCase
     public function testRecoveryIsNotifiedOnce()
     {
         $this->assertTrue(\Modules\HydroLink\Services\Support\Settings::notifyRecovery(), 'recovery notifications on by default');
-        \Modules\HydroLink\Services\Notify\Alerts::raise('binary', 'HL-BIN-04');
-        \Modules\HydroLink\Services\Notify\Alerts::raise('binary', 'HL-BIN-04');
+        // own key: the "binary" alert may already be active (hydrolink:tick of run.sh, no release reachable)
+        $key = 'test:'.uniqid();
+        \Modules\HydroLink\Services\Notify\Alerts::raise($key, 'HL-BIN-04');
+        \Modules\HydroLink\Services\Notify\Alerts::raise($key, 'HL-BIN-04');
         $this->assertCount(1, self::$sent, 'problem notified once: '.implode(' | ', self::$sent));
-        $this->assertTrue((bool) \Modules\HydroLink\Entities\Alert::where('alert_key', 'binary')->value('active'), 'alert active');
-        \Modules\HydroLink\Services\Notify\Alerts::resolve('binary');
-        $this->assertFalse((bool) \Modules\HydroLink\Entities\Alert::where('alert_key', 'binary')->value('active'), 'alert resolved');
-        \Modules\HydroLink\Services\Notify\Alerts::resolve('binary');
+        $this->assertTrue((bool) \Modules\HydroLink\Entities\Alert::where('alert_key', $key)->value('active'), 'alert active');
+        \Modules\HydroLink\Services\Notify\Alerts::resolve($key);
+        $this->assertFalse((bool) \Modules\HydroLink\Entities\Alert::where('alert_key', $key)->value('active'), 'alert resolved');
+        \Modules\HydroLink\Services\Notify\Alerts::resolve($key);
         $this->assertCount(2, self::$sent, 'problem + return to normal: '.implode(' | ', self::$sent));
     }
 
