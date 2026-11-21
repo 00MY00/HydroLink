@@ -1,6 +1,7 @@
 /*
- * HydroLink panel: forms sent with fetch (immediate feedback), automatic save of the settings, warning before
- * leaving with unsaved changes, logs loaded on demand, state refreshed every 15-30 s only while the tab is visible.
+ * HydroLink panel: forms sent with fetch (immediate feedback), automatic save of the settings (a pending save is
+ * sent when leaving the page, no "leave the page?" dialog), logs loaded on demand, state refreshed every 15-30 s only
+ * while the tab is visible.
  */
 (function () {
     'use strict';
@@ -77,21 +78,13 @@
         return 'form:' + form.action;
     }
 
-    // ---- unsaved changes in the login forms
+    // ---- typing in a login form: no automatic reload of the page meanwhile (see editing())
     page.addEventListener('input', function (e) {
         var form = e.target.form;
         if (form && form.hasAttribute('data-hl-ajax') && e.target.value !== '') {
             dirty[formKey(form)] = true;
         }
     });
-    window.addEventListener('beforeunload', function (e) {
-        if (Object.keys(dirty).length) {
-            e.preventDefault();
-            e.returnValue = page.dataset.msgUnsaved;
-            return page.dataset.msgUnsaved;
-        }
-    });
-
     // ---- automatic save of the settings (data-hl-setting)
     var timers = {};
     function settingValue(input) {
@@ -101,10 +94,11 @@
         }
         return input.type === 'checkbox' ? input.checked : input.value;
     }
-    function saveSetting(key, value) {
+    function saveSetting(key, value, leaving) {
         dirty['setting:' + key] = true;
         send(page.dataset.settingsUrl, {
             method: 'POST',
+            keepalive: !!leaving,   // still sent while the page is being left
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ key: key, value: value })
         }).then(function (res) {
@@ -137,6 +131,18 @@
         }
     }
     page.addEventListener('change', onSetting);
+    // leaving the page: settings typed less than 800 ms ago are saved right away (settings save themselves)
+    window.addEventListener('pagehide', function () {
+        Object.keys(timers).forEach(function (key) {
+            if (dirty['setting:' + key]) {
+                clearTimeout(timers[key]);
+                var input = page.querySelector('[data-hl-setting="' + key + '"]');
+                if (input) {
+                    saveSetting(key, settingValue(input), true);
+                }
+            }
+        });
+    });
     page.addEventListener('input', function (e) {
         if (e.target.dataset && e.target.dataset.hlSetting && e.target.type !== 'checkbox') {
             onSetting(e);

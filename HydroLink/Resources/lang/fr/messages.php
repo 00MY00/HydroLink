@@ -23,6 +23,7 @@ return [
     'queued_restart' => 'Redémarrage demandé : le cron s\'en charge dans moins d\'une minute.',
 
     // accounts
+    'accounts' => 'Comptes', 'settings_title' => 'Réglages',
     'add_account' => 'Ajouter un compte', 'address' => 'Adresse', 'password' => 'Mot de passe',
     'two_passwords' => 'Compte à deux mots de passe', 'mailbox_password' => 'Mot de passe de boîte',
     'connect' => 'Connecter', 'add_hint' => 'Le mot de passe sert une seule fois et n\'est pas conservé par HydroLink.',
@@ -72,5 +73,4 @@ return [
     // errors and generic
     'err_expected' => 'Attendu', 'err_effect' => 'Effet', 'err_action' => 'Action', 'err_detail' => 'Détail',
     'saved' => 'Enregistré.', 'request_failed' => 'La demande a échoué.', 'bad_request' => 'Demande invalide.',
-    'unsaved' => 'Des modifications ne sont pas enregistrées.',
 ];

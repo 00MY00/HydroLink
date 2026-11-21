@@ -12,8 +12,7 @@
      data-state-url="{{ route('hydrolink.state') }}"
      data-settings-url="{{ route('hydrolink.settings') }}"
      data-msg-saved="{{ __('hydrolink::messages.saved') }}"
-     data-msg-error="{{ __('hydrolink::messages.request_failed') }}"
-     data-msg-unsaved="{{ __('hydrolink::messages.unsaved') }}">
+     data-msg-error="{{ __('hydrolink::messages.request_failed') }}">
     <header class="hl-header">
         <div>
             <h1>HydroLink</h1>
@@ -30,7 +29,12 @@
     @endif
 
     <div class="hl-grid">
+        @php($settingsShown = false)
         @foreach ($features as $feature)
+            @if ($feature->view() && !$settingsShown && !in_array($feature->key(), ['service', 'accounts'], true))
+                @php($settingsShown = true)
+                <div class="hl-section"><h2>{{ __('hydrolink::messages.settings_title') }}</h2></div>
+            @endif
             @if ($feature->view())
                 @include($feature->view(), ['feature' => $feature, 'state' => $state, 'status' => $state['statuses'][$feature->key()]])
             @endif

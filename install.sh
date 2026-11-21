@@ -18,7 +18,7 @@
 #
 set -Eeuo pipefail
 
-SCRIPT_VERSION="1.0.1"   # same as HydroLink/module.json (checked by tools/build-release.sh)
+SCRIPT_VERSION="1.0.2"   # same as HydroLink/module.json (checked by tools/build-release.sh)
 REPO_URL="${HL_REPO_URL:-https://github.com/00MY00/HydroLink}"
 MODULE="HydroLink"
 ALIAS="hydrolink"

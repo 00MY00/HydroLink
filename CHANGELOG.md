@@ -2,6 +2,15 @@
 
 All notable changes to HydroLink. Versions follow [semantic versioning](https://semver.org/).
 
+## [1.0.2] - 2026-11-21
+
+- Panel layout: text fields had a 200 px height in the cards (flex basis in a column), which made the "Add an
+  account" card and the settings cards far too tall; fixed.
+- Desktop: three columns (two on tablets, one on phones), "Accounts" and "Settings" sections, cards of a row with
+  the same height, "Add an account" on one line (address, password, button).
+- Folded sections ("Reconnect", "Logs", ...) show an arrow.
+- No more "leave the page?" dialog: settings save themselves, a save still waiting is sent when the page is left.
+
 ## [1.0.1] - 2026-11-21
 
 - HydroLink entry in Refresh's left bar (`refresh.rail_items`, own icon), like WorkflowPacks and UpdateGuard; the

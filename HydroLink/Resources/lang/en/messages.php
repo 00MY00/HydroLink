@@ -23,6 +23,7 @@ return [
     'queued_restart' => 'Restart requested: the cron handles it within a minute.',
 
     // accounts
+    'accounts' => 'Accounts', 'settings_title' => 'Settings',
     'add_account' => 'Add an account', 'address' => 'Address', 'password' => 'Password',
     'two_passwords' => 'Two-password account', 'mailbox_password' => 'Mailbox password',
     'connect' => 'Connect', 'add_hint' => 'The password is used once and is not kept by HydroLink.',
@@ -72,5 +73,4 @@ return [
     // errors and generic
     'err_expected' => 'Expected', 'err_effect' => 'Effect', 'err_action' => 'Action', 'err_detail' => 'Detail',
     'saved' => 'Saved.', 'request_failed' => 'The request failed.', 'bad_request' => 'Invalid request.',
-    'unsaved' => 'Some changes are not saved.',
 ];
