@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'feature/**']
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-unit:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        php: ['7.1', '8.2', '8.4']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring
+          tools: none
+      - name: php -l (module)
+        run: find HydroLink -name '*.php' -not -name '*.blade.php' -print0 | xargs -0 -n1 php -l > /dev/null
+      - name: Unit tests (no FreeScout needed)
+        run: php tests/unit/run.php
+      - name: shellcheck and JavaScript syntax
+        if: matrix.php == '8.2'
+        run: |
+          shellcheck install.sh tools/build-release.sh build/build-hydroxide.sh tests/integration/run.sh
+          node --check HydroLink/Public/js/hydrolink.js
+
+  # Blocks the release when anything that looks like a secret is found in the history
+  secrets:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.21.2 git --redact --verbose --exit-code 1 /repo
+
+  # hydroxide binaries from the pinned commit of build/hydroxide.lock + build/patches
+  binaries:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: false
+      - name: Build linux-amd64 and linux-arm64
+        run: bash build/build-hydroxide.sh
+      - name: Self test of the amd64 binary
+        run: |
+          out="$(dist/hydroxide-linux-amd64 -h 2>&1 || true)"
+          printf '%s\n' "$out" | head -n 3
+          printf '%s\n' "$out" | grep -q 'usage: hydroxide'
+          printf '%s\n' "$out" | grep -q 'disable-carddav'
+          file dist/hydroxide-linux-arm64 | grep -q 'aarch64'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hydroxide
+          path: |
+            dist/hydroxide-linux-amd64
+            dist/hydroxide-linux-arm64
+            dist/hydroxide-version.txt
+            dist/LICENSE.hydroxide
+          retention-days: 7
+
+  integration:
+    needs: [binaries]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: hydroxide
+          path: dist
+      - name: FreeScout + HydroLink + PHPUnit (Docker), real hydroxide binary
+        run: HL_REAL_BINARY=dist/hydroxide-linux-amd64 bash tests/integration/run.sh
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [lint-unit, secrets, binaries, integration]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: hydroxide
+          path: dist
+      - name: Check the tag matches module.json
+        run: |
+          v="$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' HydroLink/module.json | head -n 1)"
+          test "v${v}" = "${GITHUB_REF_NAME}"
+      - name: Build archive and SHA256SUMS
+        run: bash tools/build-release.sh
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/HydroLink.zip
+            dist/install.sh
+            dist/module.json
+            dist/version.txt
+            dist/hydroxide-linux-amd64
+            dist/hydroxide-linux-arm64
+            dist/hydroxide-version.txt
+            dist/LICENSE.hydroxide
+            dist/SHA256SUMS

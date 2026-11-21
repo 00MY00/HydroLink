@@ -1,0 +1,90 @@
+<?php
+
+namespace Modules\HydroLink\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use Modules\HydroLink\Features\Registry;
+use Modules\HydroLink\Services\Accounts\AccountService;
+
+/**
+ * HydroLink: free Proton Mail accounts in FreeScout through a local hydroxide bridge run by FreeScout's cron.
+ *
+ * Nothing of FreeScout or of another module is modified. The module adds its routes, views, translations, two tables
+ * and its commands, and listens to FreeScout hooks (Eventy):
+ *   menu.manage.after_mailboxes (resources/views/layouts/app.blade.php) -> "HydroLink" in Manage (administrators)
+ *   schedule                    (app/Console/Kernel.php)                -> hydrolink:tick and hydrolink:auth
+ *   mailbox.in_active           (app/Mailbox.php, isInActive())         -> a paused account is not fetched
+ *
+ * Updates: module.json declares latestVersionUrl / latestVersionZipUrl (FreeScout's Modules page and UpdateGuard);
+ * hydrolink:health is the health check UpdateGuard runs after an update.
+ */
+class HydroLinkServiceProvider extends ServiceProvider
+{
+    const ALIAS = 'hydrolink';
+
+    protected $defer = false;
+
+    public function register()
+    {
+        $this->mergeConfigFrom(__DIR__.'/../Config/config.php', self::ALIAS);
+        $this->commands([
+            \Modules\HydroLink\Console\TickCommand::class,
+            \Modules\HydroLink\Console\AuthCommand::class,
+            \Modules\HydroLink\Console\UpdateBinaryCommand::class,
+            \Modules\HydroLink\Console\DiagnoseCommand::class,
+            \Modules\HydroLink\Console\HealthCommand::class,
+            \Modules\HydroLink\Console\UninstallCommand::class,
+        ]);
+    }
+
+    public function boot()
+    {
+        $this->loadViewsFrom(__DIR__.'/../Resources/views', self::ALIAS);
+        $this->loadTranslationsFrom(__DIR__.'/../Resources/lang', self::ALIAS);
+        $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
+        $this->loadRoutesFrom(__DIR__.'/../Http/routes.php');
+
+        $this->registerMenu();
+        $this->registerSchedule();
+        $this->registerPause();
+    }
+
+    protected function registerMenu()
+    {
+        \Eventy::addAction('menu.manage.after_mailboxes', function () {
+            try {
+                $user = auth()->user();
+                if ($user && $user->isAdmin()) {
+                    $active = \Route::is('hydrolink.*') ? 'active' : '';
+                    echo '<li class="'.$active.'"><a href="'.e(route('hydrolink.panel')).'">HydroLink</a></li>';
+                }
+            } catch (\Throwable $e) {
+                // optional entry: never break the layout
+            }
+        });
+    }
+
+    protected function registerSchedule()
+    {
+        \Eventy::addFilter('schedule', function ($schedule) {
+            try {
+                Registry::schedule($schedule);
+            } catch (\Throwable $e) {
+                // no HydroLink task rather than a broken scheduler
+            }
+
+            return $schedule;
+        });
+    }
+
+    protected function registerPause()
+    {
+        \Eventy::addFilter('mailbox.in_active', function ($value, $mailbox) {
+            if ($mailbox && in_array((int) $mailbox->id, AccountService::pausedMailboxIds(), true)) {
+                return false;
+            }
+
+            return $value;
+        }, 20, 2);
+    }
+}

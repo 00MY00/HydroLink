@@ -1,0 +1,265 @@
+HydroLink patch for hydroxide (MIT), applied on top of the pinned commit of build/hydroxide.lock.
+
+Origin: upstream pull request https://codeberg.org/emersion/hydroxide/pulls/359 (head b185380d2a02),
+with one change: on a human verification challenge (Proton error 9001) the URL is still printed
+and one line on stdin continues, also without a terminal, so the HydroLink worker can show the
+URL in the panel and continue once the person has solved it. No CAPTCHA is bypassed.
+
+Adds opt-in environment variables to 'hydroxide auth': HYDROXIDE_PASSWORD, HYDROXIDE_MAILBOX_PASSWORD,
+HYDROXIDE_BRIDGE_PASSWORD (base64 of 32 bytes), HYDROXIDE_TOTP. Unset: unchanged behaviour.
+
+diff --git a/cmd/hydroxide/config.go b/cmd/hydroxide/config.go
+new file mode 100644
+index 0000000..7bb2e5a
+--- /dev/null
++++ b/cmd/hydroxide/config.go
+@@ -0,0 +1,66 @@
++package main
++
++import (
++	"bufio"
++	"encoding/base64"
++	"errors"
++	"fmt"
++	"os"
++)
++
++// Optional, non-interactive inputs for `hydroxide auth`, for running it unattended
++// (for example in a container). Every one of them is opt-in: when its variable is
++// unset, auth behaves exactly as before. Proton authentication and encrypted
++// session storage are unchanged.
++
++// configuredPassword returns the login or mailbox password from the environment
++// (HYDROXIDE_PASSWORD, HYDROXIDE_MAILBOX_PASSWORD) when it is set. Any other
++// prompt, including the bridge password, is never answered from the environment.
++func configuredPassword(prompt string) (string, bool) {
++	name := ""
++	switch prompt {
++	case "Password":
++		name = "HYDROXIDE_PASSWORD"
++	case "Mailbox password":
++		name = "HYDROXIDE_MAILBOX_PASSWORD"
++	}
++	if name == "" {
++		return "", false
++	}
++	value := os.Getenv(name)
++	return value, value != ""
++}
++
++// configuredBridgePassword returns the bridge key to store the session under from
++// HYDROXIDE_BRIDGE_PASSWORD, which must be base64 of 32 random bytes
++// (`openssl rand -base64 32`). It returns nil when the variable is unset, in which
++// case auth generates a bridge password and prints it, as it always has. A value
++// that is set but invalid is an error, and the error never contains the value.
++func configuredBridgePassword() (*[32]byte, error) {
++	encoded := os.Getenv("HYDROXIDE_BRIDGE_PASSWORD")
++	if encoded == "" {
++		return nil, nil
++	}
++	value, err := base64.StdEncoding.DecodeString(encoded)
++	if err != nil || len(value) != 32 {
++		return nil, errors.New("HYDROXIDE_BRIDGE_PASSWORD must be the base64 encoding of 32 random bytes (openssl rand -base64 32)")
++	}
++	var key [32]byte
++	copy(key[:], value)
++	return &key, nil
++}
++
++// configuredTOTP returns the 2FA code from HYDROXIDE_TOTP when it is set, and
++// otherwise prompts and reads one line from stdin, exactly as before. It fails with
++// a clear message, instead of submitting an empty code, when nothing is supplied.
++func configuredTOTP() (string, error) {
++	if code := os.Getenv("HYDROXIDE_TOTP"); code != "" {
++		return code, nil
++	}
++	scanner := bufio.NewScanner(os.Stdin)
++	fmt.Printf("2FA TOTP code: ")
++	if !scanner.Scan() {
++		return "", errors.New("no 2FA code supplied: set HYDROXIDE_TOTP, or run hydroxide auth in a terminal")
++	}
++	return scanner.Text(), nil
++}
+diff --git a/cmd/hydroxide/config_test.go b/cmd/hydroxide/config_test.go
+new file mode 100644
+index 0000000..8600ae0
+--- /dev/null
++++ b/cmd/hydroxide/config_test.go
+@@ -0,0 +1,98 @@
++package main
++
++import (
++	"encoding/base64"
++	"os"
++	"strings"
++	"testing"
++)
++
++func TestConfiguredBridgePassword(t *testing.T) {
++	// Unset: not configured. auth then generates a bridge password, as it always has.
++	t.Setenv("HYDROXIDE_BRIDGE_PASSWORD", "")
++	if key, err := configuredBridgePassword(); key != nil || err != nil {
++		t.Fatal("an unset variable must leave the stock behaviour untouched")
++	}
++
++	// Set but invalid: an error that never repeats the value.
++	for _, value := range []string{"password", base64.StdEncoding.EncodeToString([]byte("too short"))} {
++		t.Setenv("HYDROXIDE_BRIDGE_PASSWORD", value)
++		_, err := configuredBridgePassword()
++		if err == nil {
++			t.Fatal("accepted invalid key")
++		}
++		if strings.Contains(err.Error(), value) {
++			t.Fatal("error disclosed credential")
++		}
++	}
++
++	raw := strings.Repeat("x", 32)
++	t.Setenv("HYDROXIDE_BRIDGE_PASSWORD", base64.StdEncoding.EncodeToString([]byte(raw)))
++	key, err := configuredBridgePassword()
++	if err != nil || key == nil || string(key[:]) != raw {
++		t.Fatal("configured bridge key was not used")
++	}
++}
++
++func TestConfiguredPasswords(t *testing.T) {
++	t.Setenv("HYDROXIDE_PASSWORD", "login-secret")
++	t.Setenv("HYDROXIDE_MAILBOX_PASSWORD", "mailbox-secret")
++	for prompt, want := range map[string]string{"Password": "login-secret", "Mailbox password": "mailbox-secret"} {
++		got, ok := configuredPassword(prompt)
++		if !ok || got != want {
++			t.Fatal("wrong configured password")
++		}
++	}
++	if _, ok := configuredPassword("Bridge password"); ok {
++		t.Fatal("login password reused as bridge password")
++	}
++
++	// Unset: fall through to the interactive prompt.
++	t.Setenv("HYDROXIDE_PASSWORD", "")
++	t.Setenv("HYDROXIDE_MAILBOX_PASSWORD", "")
++	for _, prompt := range []string{"Password", "Mailbox password"} {
++		if _, ok := configuredPassword(prompt); ok {
++			t.Fatal("an unset variable must fall back to prompting")
++		}
++	}
++}
++
++// withStdin replaces os.Stdin with a pipe holding input (closed afterwards, so
++// reading past it hits end of input) for the duration of the test.
++func withStdin(t *testing.T, input string) {
++	t.Helper()
++	r, w, err := os.Pipe()
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, err := w.WriteString(input); err != nil {
++		t.Fatal(err)
++	}
++	w.Close()
++	previous := os.Stdin
++	os.Stdin = r
++	t.Cleanup(func() { os.Stdin = previous; r.Close() })
++}
++
++func TestConfiguredTOTP(t *testing.T) {
++	// From the environment: stdin is never touched.
++	t.Setenv("HYDROXIDE_TOTP", "123456")
++	withStdin(t, "999999\n")
++	if code, err := configuredTOTP(); err != nil || code != "123456" {
++		t.Fatal("configured TOTP not used")
++	}
++
++	// Unset: read one line from stdin, as before (including piped input).
++	t.Setenv("HYDROXIDE_TOTP", "")
++	withStdin(t, "654321\n")
++	if code, err := configuredTOTP(); err != nil || code != "654321" {
++		t.Fatalf("stdin TOTP not read: %q, %v", code, err)
++	}
++
++	// Unset and nothing to read: a clear error, not an empty code sent to Proton.
++	withStdin(t, "")
++	code, err := configuredTOTP()
++	if err == nil || code != "" || !strings.Contains(err.Error(), "HYDROXIDE_TOTP") {
++		t.Fatal("missing TOTP must fail with instructions")
++	}
++}
+diff --git a/cmd/hydroxide/main.go b/cmd/hydroxide/main.go
+index 6426fbf..0c1f566 100644
+--- a/cmd/hydroxide/main.go
++++ b/cmd/hydroxide/main.go
+@@ -52,6 +52,9 @@ func newClient() *protonmail.Client {
+ }
+ 
+ func askPass(prompt string) ([]byte, error) {
++	if password, ok := configuredPassword(prompt); ok {
++		return []byte(password), nil
++	}
+ 	f := os.Stdin
+ 	if !term.IsTerminal(int(f.Fd())) {
+ 		// This can happen if stdin is used for piping data
+@@ -271,6 +274,10 @@ func main() {
+ 			log.Fatal("usage: hydroxide auth <username>")
+ 		}
+ 
++		secretKey, err := configuredBridgePassword()
++		if err != nil {
++			log.Fatal(err)
++		}
+ 		c := newClient()
+ 
+ 		var a *protonmail.Auth
+@@ -299,6 +306,8 @@ func main() {
+ 			a, err = c.Auth(username, loginPassword, authInfo, nil)
+ 			var humanVerifErr *protonmail.HumanVerificationRequiredError
+ 			if errors.As(err, &humanVerifErr) {
++				// HydroLink: the challenge URL is printed and a line on stdin continues,
++				// also without a terminal (the caller shows the URL and sends the line).
+ 				q := make(url.Values)
+ 				q.Set("methods", strings.Join(humanVerifErr.Details.Methods, ","))
+ 				q.Set("token", humanVerifErr.Details.Token)
+@@ -321,10 +330,10 @@ func main() {
+ 					log.Fatal("Only TOTP is supported as a 2FA method")
+ 				}
+ 
+-				scanner := bufio.NewScanner(os.Stdin)
+-				fmt.Printf("2FA TOTP code: ")
+-				scanner.Scan()
+-				code := scanner.Text()
++				code, err := configuredTOTP()
++				if err != nil {
++					log.Fatal(err)
++				}
+ 
+ 				scope, err := c.AuthTOTP(code)
+ 				if err != nil {
+@@ -360,9 +369,13 @@ func main() {
+ 			log.Fatal(err)
+ 		}
+ 
+-		secretKey, bridgePassword, err := auth.GeneratePassword()
+-		if err != nil {
+-			log.Fatal(err)
++		// No configured bridge password: generate one and print it, as always.
++		var bridgePassword string
++		if secretKey == nil {
++			secretKey, bridgePassword, err = auth.GeneratePassword()
++			if err != nil {
++				log.Fatal(err)
++			}
+ 		}
+ 
+ 		err = auth.EncryptAndSave(&auth.CachedAuth{
+@@ -375,7 +388,11 @@ func main() {
+ 			log.Fatal(err)
+ 		}
+ 
+-		fmt.Println("Bridge password:", bridgePassword)
++		if bridgePassword != "" {
++			fmt.Println("Bridge password:", bridgePassword)
++		} else {
++			fmt.Println("Authentication saved using the configured bridge password.")
++		}
+ 	case "status":
+ 		usernames, err := auth.ListUsernames()
+ 		if err != nil {

@@ -1,0 +1,32 @@
+# Generated files
+dist/
+vendor/
+node_modules/
+*.phar
+.phpunit.result.cache
+
+# Local configuration and secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Runtime data, local binaries, logs
+storage/
+*.log
+hydroxide
+hydroxide-linux-*
+backups/
+
+# Editors and system
+.idea/
+.vscode/
+.claude/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local work prompts (may contain personal data)
+inf.md
+info.md

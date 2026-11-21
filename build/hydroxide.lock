@@ -1,0 +1,10 @@
+# Pinned source of the hydroxide binaries published with each HydroLink release (read by build/build-hydroxide.sh).
+# Change these lines only together with a new HYDROXIDE_VERSION, so that every published binary keeps one name.
+#
+# Upstream: https://codeberg.org/emersion/hydroxide (the GitHub copy github.com/emersion/hydroxide is archived and
+# points to Codeberg). Commit 02b3b6c8 (2026-10-25) adds the human verification flow (Proton error 9001) upstream.
+HYDROXIDE_REPO=https://codeberg.org/emersion/hydroxide.git
+HYDROXIDE_COMMIT=02b3b6c8aff726d2404b6ed5f6ba1b7937e1f30e
+# <last upstream tag>-<short commit>-hl<patch level>
+HYDROXIDE_VERSION=0.2.33-02b3b6c-hl1
+GO_VERSION=1.26.0
