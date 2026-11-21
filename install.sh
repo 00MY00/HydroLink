@@ -219,9 +219,10 @@ fetch_module() {
     if [ -z "$src" ]; then
         if [ "$DRY_RUN" -eq 1 ]; then printf '  (dry-run) download %s\n' "${REPO_URL}/releases/latest"; return 0; fi
         src="$WORK/HydroLink.zip"
-        curl -fsSL "${REPO_URL}/releases/latest/download/HydroLink.zip" -o "$src" 2>>"$LOG" \
-            && curl -fsSL "${REPO_URL}/releases/latest/download/SHA256SUMS" -o "$WORK/SHA256SUMS" 2>>"$LOG" \
-            || die "$(t "Téléchargement de la dernière release impossible." "Cannot download the latest release.")"
+        if ! curl -fsSL "${REPO_URL}/releases/latest/download/HydroLink.zip" -o "$src" 2>>"$LOG" \
+            || ! curl -fsSL "${REPO_URL}/releases/latest/download/SHA256SUMS" -o "$WORK/SHA256SUMS" 2>>"$LOG"; then
+            die "$(t "Téléchargement de la dernière release impossible." "Cannot download the latest release.")"
+        fi
         local expected actual
         expected="$(sed -n 's/^\([a-f0-9]\{64\}\)[[:space:]]\{1,\}\*\{0,1\}HydroLink\.zip[[:space:]]*$/\1/p' "$WORK/SHA256SUMS" | head -n 1)"
         actual="$(sha256sum "$src" | cut -d' ' -f1)"

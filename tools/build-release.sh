@@ -38,6 +38,8 @@ fi
 cp "$ROOT/install.sh" "$DIST/install.sh"
 cp "$ROOT/HydroLink/module.json" "$DIST/module.json"
 printf '%s\n' "$version" >"$DIST/version.txt"
-(cd "$DIST" && find . -maxdepth 1 -type f ! -name SHA256SUMS -printf '%f\n' | LC_ALL=C sort | xargs sha256sum >SHA256SUMS)
+files="$(cd "$DIST" && find . -maxdepth 1 -type f ! -name SHA256SUMS -printf '%f\n' | LC_ALL=C sort)"
+# shellcheck disable=SC2086 # one file name per word (names without spaces)
+(cd "$DIST" && sha256sum $files >"$DIST/SHA256SUMS.tmp" && mv "$DIST/SHA256SUMS.tmp" "$DIST/SHA256SUMS")
 printf 'HydroLink %s: %s\n' "$version" "$DIST/HydroLink.zip"
 cat "$DIST/SHA256SUMS"

@@ -30,7 +30,9 @@ trap '[ -n "${KEEP:-}" ] || cleanup' EXIT
 debug() {
     trap - ERR
     log "Debug: FreeScout setup and Laravel log"
-    docker exec "$APP" sh -c 'tail -n 60 /tmp/setup.log 2>/dev/null; tail -n 80 /var/www/html/storage/logs/*.log 2>/dev/null' || true
+    docker exec "$APP" sh -c 'tail -n 30 /tmp/setup.log 2>/dev/null' || true
+    log "Debug: errors of the Laravel log (message and first frames)"
+    docker exec "$APP" sh -c 'grep -h -A6 "\.ERROR\|\.WARNING\|\.CRITICAL" /var/www/html/storage/logs/*.log 2>/dev/null | cut -c1-1500 | tail -n 120' || true
 }
 trap debug ERR
 

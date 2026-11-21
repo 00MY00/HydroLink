@@ -50,6 +50,9 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
         exec('rm -rf '.escapeshellarg((string) Paths::$base));
         Paths::$base = null;
         parent::tearDown();
+        // FreeScout's application installs its own handlers at each boot
+        restore_error_handler();
+        restore_exception_handler();
     }
 
     /** Installs the test double as the hydroxide binary. */

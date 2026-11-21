@@ -17,7 +17,10 @@ lock() { sed -n "s/^$1=\(.*\)$/\1/p" "$ROOT/build/hydroxide.lock" | head -n 1; }
 REPO="$(lock HYDROXIDE_REPO)"
 COMMIT="$(lock HYDROXIDE_COMMIT)"
 VERSION="$(lock HYDROXIDE_VERSION)"
-[ -n "$REPO" ] && [ -n "$COMMIT" ] && [ -n "$VERSION" ] || { echo "build/hydroxide.lock is incomplete" >&2; exit 1; }
+if [ -z "$REPO" ] || [ -z "$COMMIT" ] || [ -z "$VERSION" ]; then
+    echo "build/hydroxide.lock is incomplete" >&2
+    exit 1
+fi
 
 git clone -q "$REPO" "$WORK/src"
 git -C "$WORK/src" -c advice.detachedHead=false checkout -q "$COMMIT"

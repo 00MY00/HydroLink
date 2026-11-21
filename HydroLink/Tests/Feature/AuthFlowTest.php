@@ -12,7 +12,7 @@ use Modules\HydroLink\Tests\TestCase;
 /** Sign-in flows driven by the cron worker: no 2FA, 2FA, human verification, two passwords, refusals, time out. */
 class AuthFlowTest extends TestCase
 {
-    const PASSWORD = 'Correct-Horse-Battery-42';
+    const PASSWORD = 'test-only-password';
 
     private function signIn(string $email, ?callable $before = null, string $mailboxPassword = ''): Account
     {
