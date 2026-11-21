@@ -25,7 +25,8 @@ class PanelTest extends TestCase
     public function testNonAdministratorsAreRefused()
     {
         $user = new \App\User();
-        $user->fill(['first_name' => 'U', 'last_name' => 'Ser', 'email' => 'user-'.uniqid().'@example.test', 'password' => bcrypt(uniqid()), 'role' => \App\User::ROLE_USER]);
+        $user->fill(['first_name' => 'U', 'last_name' => 'Ser', 'email' => 'user-'.uniqid().'@example.test', 'password' => bcrypt(uniqid())]);
+        $user->role = \App\User::ROLE_USER;
         $user->save();
         $r = $this->actingAs($user)->get(route('hydrolink.panel'));
         $this->assertNotSame(200, $r->getStatusCode());

@@ -68,7 +68,8 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
         $user = \App\User::where('role', \App\User::ROLE_ADMIN)->first();
         if (!$user) {
             $user = new \App\User();
-            $user->fill(['first_name' => 'Test', 'last_name' => 'Admin', 'email' => 'admin-'.uniqid().'@example.test', 'password' => bcrypt(uniqid('', true)), 'role' => \App\User::ROLE_ADMIN]);
+            $user->fill(['first_name' => 'Test', 'last_name' => 'Admin', 'email' => 'admin-'.uniqid().'@example.test', 'password' => bcrypt(uniqid('', true))]);
+            $user->role = \App\User::ROLE_ADMIN;   // not fillable in FreeScout (User::$guarded)
             $user->save();
         }
 
