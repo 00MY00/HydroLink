@@ -25,6 +25,28 @@ class PanelTest extends TestCase
         $this->assertSame(['statuses', 'accounts', 'env', 'tick'], array_keys(json_decode($state->getContent(), true)));
     }
 
+    public function testMenuEntriesForAdministratorsOnly()
+    {
+        // Refresh's left bar (refresh.rail_items), FreeScout's Manage menu and the mailbox settings menu (phones)
+        $this->actingAs($this->admin());
+        $items = \Eventy::filter('refresh.rail_items', []);
+        $this->assertSame(['HydroLink'], array_column($items, 'label'));
+        $this->assertSame(route('hydrolink.panel'), $items[0]['url']);
+        $this->assertStringEndsWith('/img/module.svg', $items[0]['icon']);
+        foreach (['menu.manage.after_mailboxes', 'mailboxes.settings.menu'] as $hook) {
+            ob_start();
+            \Eventy::action($hook, null);
+            $this->assertStringContainsString(route('hydrolink.panel'), ob_get_clean(), $hook);
+        }
+
+        $user = new \App\User();
+        $user->fill(['first_name' => 'U', 'last_name' => 'Ser', 'email' => 'user-'.uniqid().'@example.test', 'password' => bcrypt(uniqid())]);
+        $user->role = \App\User::ROLE_USER;
+        $user->save();
+        $this->actingAs($user);
+        $this->assertSame([], \Eventy::filter('refresh.rail_items', []));
+    }
+
     public function testNonAdministratorsAreRefused()
     {
         $user = new \App\User();

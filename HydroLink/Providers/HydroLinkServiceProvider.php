@@ -12,6 +12,7 @@ use Modules\HydroLink\Services\Accounts\AccountService;
  * Nothing of FreeScout or of another module is modified. The module adds its routes, views, translations, two tables
  * and its commands, and listens to FreeScout hooks (Eventy):
  *   menu.manage.after_mailboxes (resources/views/layouts/app.blade.php) -> "HydroLink" in Manage (administrators)
+ *   refresh.rail_items          (Refresh module, optional)              -> "HydroLink" in Refresh's left bar
  *   schedule                    (app/Console/Kernel.php)                -> hydrolink:tick and hydrolink:auth
  *   mailbox.in_active           (app/Mailbox.php, isInActive())         -> a paused account is not fetched
  *
@@ -62,6 +63,42 @@ class HydroLinkServiceProvider extends ServiceProvider
                 // optional entry: never break the layout
             }
         });
+
+        // Refresh's left bar (extension point of the Refresh module, also used by WorkflowPacks and UpdateGuard;
+        // ignored when Refresh is absent). The Manage menu entry above stays for FreeScout without Refresh.
+        \Eventy::addFilter('refresh.rail_items', function ($items) {
+            try {
+                $user = auth()->user();
+                if ($user && $user->isAdmin()) {
+                    $items[] = [
+                        'url'    => route('hydrolink.panel'),
+                        'label'  => 'HydroLink',
+                        'icon'   => asset(\Module::getPublicPath(self::ALIAS).'/img/module.svg'),
+                        'active' => \Route::is('hydrolink.*'),
+                        'order'  => 80,
+                    ];
+                }
+            } catch (\Throwable $e) {
+                // optional entry
+            }
+
+            return $items;
+        });
+
+        // Settings menu of a mailbox (cog of the mailbox, resources/views/mailboxes/settings_menu.blade.php). Also shown
+        // on phones and tablets, where Refresh hides its left bar.
+        \Eventy::addAction('mailboxes.settings.menu', function ($mailbox) {
+            try {
+                $user = auth()->user();
+                if ($user && $user->isAdmin()) {
+                    $active = \Route::is('hydrolink.*') ? 'active' : '';
+                    echo '<li class="'.$active.'"><a href="'.e(route('hydrolink.panel')).'">'
+                        .'<i class="glyphicon glyphicon-link"></i> HydroLink</a></li>';
+                }
+            } catch (\Throwable $e) {
+                // optional entry
+            }
+        }, 40);
     }
 
     protected function registerSchedule()

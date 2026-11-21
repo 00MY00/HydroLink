@@ -48,7 +48,7 @@ migrations and installs the hydroxide binary. Options: `--path /var/www/html`, `
 
 Or manually: unzip `HydroLink.zip` into `Modules/`, then **Manage > Modules > HydroLink > Activate**.
 
-Then: **Manage > HydroLink**, card **Add an account**. The sign-in starts within a minute (cron). Answer the 2FA
+Then: **HydroLink** in Refresh's left bar, **Manage > HydroLink**, or the settings menu of any mailbox (phones), card **Add an account**. The sign-in starts within a minute (cron). Answer the 2FA
 code or the verification if asked. The mailbox appears in FreeScout, ready to receive and send.
 
 ## Updates

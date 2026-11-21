@@ -2,6 +2,13 @@
 
 All notable changes to HydroLink. Versions follow [semantic versioning](https://semver.org/).
 
+## [1.0.1] - 2026-11-21
+
+- HydroLink entry in Refresh's left bar (`refresh.rail_items`, own icon), like WorkflowPacks and UpdateGuard; the
+  entry in FreeScout's Manage menu stays.
+- HydroLink entry in the settings menu of each mailbox (administrators), reachable on phones and tablets where
+  Refresh hides its left bar.
+
 ## [1.0.0] - 2026-11-21
 
 First version.
