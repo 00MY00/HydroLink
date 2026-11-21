@@ -24,7 +24,8 @@ built by the CI is started for real.
 | `proc_open` disabled in PHP-FPM | the panel only writes `run/desired.json`: `PanelTest::testServiceAndBinaryButtonsOnlyWriteTheDesiredState` | CI |
 | Real hydroxide binary: self test, serve, IMAP/SMTP | `RealBinaryTest` | CI |
 | Panel for administrators only, autosave, validation | `PanelTest` | CI |
-| UpdateGuard health command | `PanelTest::testHealthCommandForUpdateGuard`, `hydrolink:health --json` in `run.sh` | CI |
+| UpdateGuard health command | `PanelTest::testHealthCommandForUpdateGuard`, `testHealthFailsOnAnyCodeProblem`, `hydrolink:health --json` in `run.sh` | CI |
+| UpdateGuard probe checks (`updateguard.health_check`) | `PanelTest::testUpdateGuardProbeGetsRuntimeChecksForHydroLinkOnly` | CI |
 | Secret scan | job `secrets` (gitleaks, blocks the release) | CI |
 | Receive a mail in FreeScout, reply received by the recipient (real free account) | by hand on a test instance | to do on first install |
 | Panel on phone, tablet, desktop | CSS rules (one column under 768 px, 44 px targets); by hand on the instance | to do on first install |

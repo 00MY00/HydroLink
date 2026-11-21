@@ -15,6 +15,7 @@ use Modules\HydroLink\Services\Accounts\AccountService;
  *   refresh.rail_items          (Refresh module, optional)              -> "HydroLink" in Refresh's left bar
  *   schedule                    (app/Console/Kernel.php)                -> hydrolink:tick and hydrolink:auth
  *   mailbox.in_active           (app/Mailbox.php, isInActive())         -> a paused account is not fetched
+ *   updateguard.health_check    (UpdateGuard module, optional)          -> hydroxide, cron and accounts in its report
  *
  * Updates: module.json declares latestVersionUrl / latestVersionZipUrl (FreeScout's Modules page and UpdateGuard);
  * hydrolink:health is the health check UpdateGuard runs after an update.
@@ -48,6 +49,26 @@ class HydroLinkServiceProvider extends ServiceProvider
         $this->registerMenu();
         $this->registerSchedule();
         $this->registerPause();
+        $this->registerUpdateGuard();
+    }
+
+    /**
+     * UpdateGuard (optional): its probe adds the checks returned by the "updateguard.health_check" filter to the
+     * health report of the module. State of hydroxide, cron and accounts, PASS or WARN only (never a rollback).
+     * The native check is hydrolink:health (module.json "healthCommand").
+     */
+    protected function registerUpdateGuard()
+    {
+        \Eventy::addFilter('updateguard.health_check', function ($checks, $name = '', $alias = '') {
+            if (strtolower((string) $alias) !== self::ALIAS && (string) $name !== 'HydroLink') {
+                return $checks;
+            }
+            try {
+                return array_merge((array) $checks, \Modules\HydroLink\Services\Health\ModuleHealth::runtime());
+            } catch (\Throwable $e) {
+                return $checks;
+            }
+        }, 20, 3);
     }
 
     protected function registerMenu()

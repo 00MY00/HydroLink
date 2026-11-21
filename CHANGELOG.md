@@ -2,6 +2,16 @@
 
 All notable changes to HydroLink. Versions follow [semantic versioning](https://semver.org/).
 
+## [1.0.3] - 2026-11-21
+
+- UpdateGuard health check: `hydrolink:health --json` now checks files, classes, tables and columns, routes, views,
+  translations (FR/EN), storage, Artisan commands and scheduled tasks; any failure exits 1 (UpdateGuard rolls the
+  update back). The state of hydroxide, of the cron and of the accounts is reported under `runtime` and, through
+  UpdateGuard's `updateguard.health_check` filter, in its health report as PASS or WARN only: a Proton outage or an
+  account waiting for a 2FA code never causes a rollback.
+- Icon of the left bar: a line icon without background (Refresh draws icons as a mask, the old one showed as a
+  filled square).
+
 ## [1.0.2] - 2026-11-21
 
 - Panel layout: text fields had a 200 px height in the cards (flex basis in a column), which made the "Add an

@@ -114,5 +114,28 @@ class PanelTest extends TestCase
         $json = json_decode(trim(\Artisan::output()), true);
         $this->assertSame('ok', $json['status']);
         $this->assertSame('HydroLink', $json['module']);
+        $this->assertSame(['files', 'classes', 'database', 'routes', 'views', 'translations', 'storage', 'commands', 'schedule'], array_keys($json['checks']));
+        $this->assertSame(['ok'], array_values(array_unique($json['checks'])), json_encode($json['checks']));
+        // runtime state: reported, never a failure (no binary and no cron in this test storage)
+        $this->assertSame('WARN', $json['runtime']['hydrolink binary']['result']);
+        $this->assertSame('WARN', $json['runtime']['hydrolink cron']['result']);
+    }
+
+    public function testHealthFailsOnAnyCodeProblem()
+    {
+        // no DDL here (it would end the test transaction): the exit code follows every code check
+        $H = \Modules\HydroLink\Services\Health\ModuleHealth::class;
+        $this->assertTrue($H::healthy(['files' => 'ok', 'routes' => 'ok']));
+        $this->assertFalse($H::healthy(['files' => 'ok', 'database' => 'fail: table hydrolink_alerts missing']));
+    }
+
+    public function testUpdateGuardProbeGetsRuntimeChecksForHydroLinkOnly()
+    {
+        $checks = \Eventy::filter('updateguard.health_check', [], 'HydroLink', 'hydrolink');
+        $this->assertSame(['hydrolink binary', 'hydrolink cron', 'hydrolink service', 'hydrolink accounts'], array_keys($checks));
+        foreach ($checks as $check) {
+            $this->assertContains($check['result'], ['PASS', 'WARN']);
+        }
+        $this->assertSame([], \Eventy::filter('updateguard.health_check', [], 'WorkflowPacks', 'workflowpacks'));
     }
 }

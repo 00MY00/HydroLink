@@ -54,7 +54,9 @@ code or the verification if asked. The mailbox appears in FreeScout, ready to re
 ## Updates
 
 - Module: FreeScout's **Manage > Modules**, the [UpdateGuard](https://github.com/00MY00/UpdateGuard) module, or
-  `install.sh --update`. `hydrolink:health` is the health check UpdateGuard runs.
+  `install.sh --update`. `hydrolink:health` is the health check UpdateGuard runs: the module's code (files,
+  classes, tables, routes, views, translations, storage, commands, scheduled tasks) decides the result; hydroxide,
+  the cron and the accounts are shown in UpdateGuard's report as PASS or WARN, never as a reason to roll back.
 - hydroxide binary: card **Binary** > **Update**, or **Automatic update**.
 
 ## Commands
