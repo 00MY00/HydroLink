@@ -21,7 +21,9 @@ final class Settings
             return array_key_exists($key, self::$memory) ? self::$memory[$key] : $default;
         }
 
-        return \Option::get(self::PREFIX.$key, $default);
+        // without Option's static cache: Option::set() does not update it, so a value saved earlier in the same
+        // request (automatic save, cron run) would otherwise be read with its old value
+        return \Option::get(self::PREFIX.$key, $default, true, false);
     }
 
     public static function set(string $key, $value): void

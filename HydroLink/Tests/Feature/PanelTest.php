@@ -17,9 +17,12 @@ class PanelTest extends TestCase
         Account::create(['email' => 'shown@example.test', 'status' => Account::WAITING_2FA]);
         $r = $this->actingAs($this->admin())->get(route('hydrolink.panel'));
         $r->assertStatus(200);
-        $r->assertSee('shown@example.test');
-        $r->assertSee('HL-ENV-05');   // no cron run yet in this test storage
-        $this->actingAs($this->admin())->get(route('hydrolink.state'))->assertStatus(200)->assertJsonStructure(['statuses', 'accounts', 'env']);
+        // assertions on the content directly (the TestResponse helpers of Laravel 5.5 do not work with PHPUnit 11)
+        $this->assertStringContainsString('shown@example.test', $r->getContent());
+        $this->assertStringContainsString('HL-ENV-05', $r->getContent());   // no cron run yet in this test storage
+        $state = $this->actingAs($this->admin())->get(route('hydrolink.state'));
+        $state->assertStatus(200);
+        $this->assertSame(['statuses', 'accounts', 'env', 'tick'], array_keys(json_decode($state->getContent(), true)));
     }
 
     public function testNonAdministratorsAreRefused()
@@ -36,7 +39,8 @@ class PanelTest extends TestCase
     {
         $this->installFake();
         $r = $this->actingAs($this->admin())->postJson(route('hydrolink.accounts.store'), ['email' => 'New@Example.test', 'password' => 'secret-pass']);
-        $r->assertStatus(200)->assertJson(['ok' => true]);
+        $r->assertStatus(200);
+        $this->assertTrue(json_decode($r->getContent(), true)['ok']);
         $a = Account::where('email', 'new@example.test')->first();
         $this->assertSame(Account::PENDING, $a->status);
         $this->assertSame('secret-pass', AuthRequests::get($a->id)['password']);
