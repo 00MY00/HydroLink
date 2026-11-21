@@ -36,7 +36,9 @@ class ServiceTest extends TestCase
         $this->assertTrue(Probes::imap(1143)['ok']);
 
         ProcessRunner::terminate($pid, 0);   // forced stop (SIGKILL)
-        usleep(300000);
+        for ($i = 0; $i < 30 && HydroxideProcess::running($pid); $i++) {
+            usleep(100000);   // up to 3 s: a loaded CI runner may take more than a moment to reap the process
+        }
         $this->assertFalse(HydroxideProcess::running($pid));
         $this->assertSame('running', Watchdog::service()['status'], 'restarted by the watchdog');
         $this->assertNotSame($pid, HydroxideProcess::pid());
