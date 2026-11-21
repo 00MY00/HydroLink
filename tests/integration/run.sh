@@ -85,8 +85,8 @@ log "hydrolink:health, hydrolink:tick, hydrolink:diagnose, scheduler"
 docker exec -u www-data -w /var/www/html "$APP" php artisan hydrolink:health --json
 docker exec -u www-data -w /var/www/html "$APP" php artisan hydrolink:tick
 docker exec -u www-data -w /var/www/html "$APP" php artisan hydrolink:diagnose
-docker exec -u www-data -w /var/www/html "$APP" php artisan schedule:list 2>/dev/null | grep -q hydrolink:tick \
-    || docker exec -u www-data -w /var/www/html "$APP" php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); $s = $app->make(Illuminate\Console\Scheduling\Schedule::class); $s = \Eventy::filter("schedule", $s); $c = implode(" ", array_map(function ($e) { return $e->command; }, $s->events())); exit(strpos($c, "hydrolink:tick") !== false && strpos($c, "hydrolink:auth") !== false ? 0 : 1);'
+# both tasks registered through FreeScout's "schedule" filter (Laravel 5.5 has no schedule:list)
+docker exec -u www-data -w /var/www/html "$APP" php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); $s = $app->make(Illuminate\Console\Scheduling\Schedule::class); $s = \Eventy::filter("schedule", $s); $c = implode(" ", array_map(function ($e) { return $e->command; }, $s->events())); exit(strpos($c, "hydrolink:tick") !== false && strpos($c, "hydrolink:auth") !== false ? 0 : 1);'
 log "hydrolink:uninstall --dry-run"
 docker exec -u www-data -w /var/www/html "$APP" php artisan hydrolink:uninstall --dry-run
 

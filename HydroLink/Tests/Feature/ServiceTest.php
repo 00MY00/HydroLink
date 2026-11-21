@@ -89,11 +89,15 @@ class ServiceTest extends TestCase
 
     public function testRecoveryIsNotifiedOnce()
     {
+        $this->assertTrue(\Modules\HydroLink\Services\Support\Settings::notifyRecovery(), 'recovery notifications on by default');
         \Modules\HydroLink\Services\Notify\Alerts::raise('binary', 'HL-BIN-04');
         \Modules\HydroLink\Services\Notify\Alerts::raise('binary', 'HL-BIN-04');
+        $this->assertCount(1, self::$sent, 'problem notified once: '.implode(' | ', self::$sent));
+        $this->assertTrue((bool) \Modules\HydroLink\Entities\Alert::where('alert_key', 'binary')->value('active'), 'alert active');
         \Modules\HydroLink\Services\Notify\Alerts::resolve('binary');
+        $this->assertFalse((bool) \Modules\HydroLink\Entities\Alert::where('alert_key', 'binary')->value('active'), 'alert resolved');
         \Modules\HydroLink\Services\Notify\Alerts::resolve('binary');
-        $this->assertCount(2, self::$sent, 'problem + return to normal');
+        $this->assertCount(2, self::$sent, 'problem + return to normal: '.implode(' | ', self::$sent));
     }
 
     public function testPauseStopsFetchingOfTheMailbox()
