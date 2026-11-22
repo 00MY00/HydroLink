@@ -14,7 +14,7 @@ class PanelController extends Controller
 {
     public function index()
     {
-        $version = (string) (json_decode((string) @file_get_contents(__DIR__.'/../../module.json'), true)['version'] ?? '1');
+        $version = \Modules\HydroLink\Providers\HydroLinkServiceProvider::version();
 
         return view('hydrolink::panel', ['state' => PanelState::build(), 'features' => Registry::all(), 'version' => $version]);
     }

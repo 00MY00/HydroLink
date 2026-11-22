@@ -2,6 +2,11 @@
 
 All notable changes to HydroLink. Versions follow [semantic versioning](https://semver.org/).
 
+## [1.0.4] - 2026-11-22
+
+- Icon of Refresh's left bar: its address carries the module version (`module.svg?v=1.0.4`), so a browser or a
+  proxy that kept the old icon (filled square) loads the new one.
+
 ## [1.0.3] - 2026-11-21
 
 - UpdateGuard health check: `hydrolink:health --json` now checks files, classes, tables and columns, routes, views,

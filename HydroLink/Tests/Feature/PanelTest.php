@@ -32,7 +32,7 @@ class PanelTest extends TestCase
         $items = \Eventy::filter('refresh.rail_items', []);
         $this->assertSame(['HydroLink'], array_column($items, 'label'));
         $this->assertSame(route('hydrolink.panel'), $items[0]['url']);
-        $this->assertStringEndsWith('/img/module.svg', $items[0]['icon']);
+        $this->assertStringEndsWith('/img/module.svg?v='.\Modules\HydroLink\Providers\HydroLinkServiceProvider::version(), $items[0]['icon']);
         foreach (['menu.manage.after_mailboxes', 'mailboxes.settings.menu'] as $hook) {
             ob_start();
             \Eventy::action($hook, null);

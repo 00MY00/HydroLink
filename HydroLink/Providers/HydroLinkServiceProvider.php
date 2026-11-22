@@ -71,6 +71,17 @@ class HydroLinkServiceProvider extends ServiceProvider
         }, 20, 3);
     }
 
+    /** Version of the installed module (module.json), '1' if unreadable. */
+    public static function version(): string
+    {
+        static $version = null;
+        if ($version === null) {
+            $version = (string) (json_decode((string) @file_get_contents(__DIR__.'/../module.json'), true)['version'] ?? '1');
+        }
+
+        return $version;
+    }
+
     protected function registerMenu()
     {
         \Eventy::addAction('menu.manage.after_mailboxes', function () {
@@ -94,7 +105,8 @@ class HydroLinkServiceProvider extends ServiceProvider
                     $items[] = [
                         'url'    => route('hydrolink.panel'),
                         'label'  => 'HydroLink',
-                        'icon'   => asset(\Module::getPublicPath(self::ALIAS).'/img/module.svg'),
+                        // ?v=: a new version is a new address, so no browser or proxy keeps an old icon
+                        'icon'   => asset(\Module::getPublicPath(self::ALIAS).'/img/module.svg').'?v='.rawurlencode(self::version()),
                         'active' => \Route::is('hydrolink.*'),
                         'order'  => 80,
                     ];
