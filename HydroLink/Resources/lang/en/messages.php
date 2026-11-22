@@ -23,6 +23,9 @@ return [
     'queued_restart' => 'Restart requested: the cron handles it within a minute.',
 
     // accounts
+    'rename' => 'Rename', 'name' => 'Name', 'save' => 'Save', 'renamed' => 'Name saved.', 'mailbox_link' => 'FreeScout mailbox',
+    'rename_hint' => 'Shown on this card and given to the FreeScout mailbox (40 characters at most). Empty: default name.',
+    'name_too_long' => 'The name is limited to 40 characters.', 'name_invalid' => 'The name contains characters that are not allowed.',
     'accounts' => 'Accounts', 'settings_title' => 'Settings',
     'add_account' => 'Add an account', 'address' => 'Address', 'password' => 'Password',
     'two_passwords' => 'Two-password account', 'mailbox_password' => 'Mailbox password',

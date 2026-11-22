@@ -2,7 +2,7 @@
     "name": "HydroLink",
     "alias": "hydrolink",
     "description": "Receive and send the e-mails of free Proton Mail accounts in FreeScout through a local hydroxide bridge, managed by FreeScout's cron. Independent project, not affiliated with Proton AG.",
-    "version": "1.0.4",
+    "version": "1.1.0",
     "detailsUrl": "https://github.com/00MY00/HydroLink",
     "latestVersionUrl": "https://github.com/00MY00/HydroLink/releases/latest/download/version.txt",
     "latestVersionZipUrl": "https://github.com/00MY00/HydroLink/releases/latest/download/HydroLink.zip",

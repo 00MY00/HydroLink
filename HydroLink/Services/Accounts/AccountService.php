@@ -38,6 +38,22 @@ final class AccountService
         AuthRequests::verificationDone((int) $account->id);
     }
 
+    /**
+     * New name of an account, also given to its FreeScout mailbox (what agents see). Spaces are tidied; an empty name
+     * goes back to the default (the address in the panel, the part before "@" for the mailbox).
+     */
+    public static function rename(Account $account, string $name): void
+    {
+        $name = mb_substr(trim((string) preg_replace('/\s+/u', ' ', $name)), 0, 40);
+        $account->name = $name !== '' ? $name : null;
+        $account->save();
+        $mailbox = $account->mailbox_id ? \App\Mailbox::find($account->mailbox_id) : null;
+        if ($mailbox) {
+            $mailbox->name = $name !== '' ? $name : MailboxLinker::name($account->email);
+            $mailbox->save();
+        }
+    }
+
     /** Pause: FreeScout stops fetching this mailbox (filter "mailbox.in_active"); hydroxide keeps the session. */
     public static function setPaused(Account $account, bool $paused): void
     {

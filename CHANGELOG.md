@@ -2,6 +2,14 @@
 
 All notable changes to HydroLink. Versions follow [semantic versioning](https://semver.org/).
 
+## [1.1.0] - 2026-11-22
+
+- Rename an account: section **Rename** of its card. The name is the title of the card (the address stays below)
+  and the name of its FreeScout mailbox; 40 characters at most (FreeScout's limit), empty = default name. A name
+  given before the first connection is used when the mailbox is created.
+- Migration `add_name_to_hydrolink_accounts`: one nullable column, the previous version keeps working with it.
+- `hydrolink:health` also checks the new column and route.
+
 ## [1.0.4] - 2026-11-22
 
 - Icon of Refresh's left bar: its address carries the module version (`module.svg?v=1.0.4`), so a browser or a

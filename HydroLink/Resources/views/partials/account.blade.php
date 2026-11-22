@@ -7,11 +7,15 @@
 @endphp
 <section class="hl-card" id="hl-account-{{ $account->id }}" data-account="{{ $account->id }}" data-status="{{ $account->status }}" data-paused="{{ $account->paused ? 1 : 0 }}">
     <div class="hl-card-head">
-        <h2 class="hl-ellipsis" title="{{ $account->email }}">{{ $account->email }}</h2>
+        <h2 class="hl-ellipsis" title="{{ $account->name ?: $account->email }}">{{ $account->name ?: $account->email }}</h2>
         @include('hydrolink::partials.pill', ['s' => $pill, 'id' => 'account-'.$account->id])
     </div>
-    @if ($mailbox)
-        <p class="hl-sub"><a href="{{ route('mailboxes.update', ['id' => $mailbox->id]) }}">{{ $mailbox->name }}</a></p>
+    @if ($account->name || $mailbox)
+        <p class="hl-sub hl-ellipsis">
+            @if ($account->name)<span class="hl-email">{{ $account->email }}</span>@endif
+            @if ($account->name && $mailbox) · @endif
+            @if ($mailbox)<a href="{{ route('mailboxes.update', ['id' => $mailbox->id]) }}">{{ __('hydrolink::messages.mailbox_link') }}</a>@endif
+        </p>
     @endif
 
     @if (in_array($account->status, ['pending', 'running'], true))
@@ -68,6 +72,19 @@
             </form>
         </details>
     </div>
+
+    <details class="hl-more">
+        <summary>{{ __('hydrolink::messages.rename') }}</summary>
+        <form method="post" action="{{ route('hydrolink.accounts.rename', ['id' => $account->id]) }}" class="hl-form hl-stack" data-hl-ajax data-hl-reload autocomplete="off">
+            {{ csrf_field() }}
+            <div class="hl-inline">
+                <label class="hl-field"><span>{{ __('hydrolink::messages.name') }}</span>
+                    <input type="text" name="name" maxlength="40" value="{{ $account->name }}" placeholder="{{ \Modules\HydroLink\Services\Accounts\MailboxLinker::name($account->email) }}"></label>
+                <button type="submit" class="hl-btn hl-btn-primary">{{ __('hydrolink::messages.save') }}</button>
+            </div>
+            <p class="hl-hint">{{ __('hydrolink::messages.rename_hint') }}</p>
+        </form>
+    </details>
 
     <details class="hl-more" data-hl-logs="{{ route('hydrolink.accounts.logs', ['id' => $account->id]) }}">
         <summary>{{ __('hydrolink::messages.logs') }}</summary>

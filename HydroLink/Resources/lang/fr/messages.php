@@ -23,6 +23,9 @@ return [
     'queued_restart' => 'Redémarrage demandé : le cron s\'en charge dans moins d\'une minute.',
 
     // accounts
+    'rename' => 'Renommer', 'name' => 'Nom', 'save' => 'Enregistrer', 'renamed' => 'Nom enregistré.', 'mailbox_link' => 'Boîte FreeScout',
+    'rename_hint' => 'Affiché sur cette carte et donné à la boîte FreeScout (40 caractères au plus). Vide : nom par défaut.',
+    'name_too_long' => 'Le nom est limité à 40 caractères.', 'name_invalid' => 'Le nom contient des caractères non autorisés.',
     'accounts' => 'Comptes', 'settings_title' => 'Réglages',
     'add_account' => 'Ajouter un compte', 'address' => 'Adresse', 'password' => 'Mot de passe',
     'two_passwords' => 'Compte à deux mots de passe', 'mailbox_password' => 'Mot de passe de boîte',

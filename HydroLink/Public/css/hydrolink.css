@@ -50,6 +50,7 @@
 .hl-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hl-sub { margin: -6px 0 0; font-size: 13px; }
 .hl-sub a, .hl-page a { color: var(--hl-link); }
+.hl-email { color: var(--hl-text-2); }
 
 /* pills: dot + word */
 .hl-pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; flex: none; }

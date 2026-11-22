@@ -7,6 +7,7 @@ namespace Modules\HydroLink\Http\Controllers;
 use Illuminate\Http\Request;
 use Modules\HydroLink\Entities\Account;
 use Modules\HydroLink\Http\Requests\LoginRequest;
+use Modules\HydroLink\Http\Requests\RenameRequest;
 use Modules\HydroLink\Http\Requests\TotpRequest;
 use Modules\HydroLink\Services\Accounts\AccountService;
 use Modules\HydroLink\Services\Health\LogReader;
@@ -58,6 +59,14 @@ class AccountsController extends Controller
         AccountService::verificationDone($account);
 
         return $this->done($request, __('hydrolink::messages.verification_sent'));
+    }
+
+    public function rename(RenameRequest $request, $id)
+    {
+        $account = Account::findOrFail((int) $id);
+        AccountService::rename($account, (string) $request->input('name', ''));
+
+        return $this->done($request, __('hydrolink::messages.renamed'));
     }
 
     public function pause(Request $request, $id)

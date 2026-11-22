@@ -23,7 +23,7 @@ final class MailboxLinker
         if (!$mailbox) {
             $mailbox = new Mailbox();
             $mailbox->email = $account->email;
-            $mailbox->name = self::name($account->email);
+            $mailbox->name = $account->name ?: self::name($account->email);
         }
         $mailbox->fill(self::settings($account->email, $bridge));
         $mailbox->save();

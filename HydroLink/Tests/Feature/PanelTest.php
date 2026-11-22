@@ -47,6 +47,38 @@ class PanelTest extends TestCase
         $this->assertSame([], \Eventy::filter('refresh.rail_items', []));
     }
 
+    public function testRenameSetsTheCardAndTheMailboxName()
+    {
+        $account = Account::create(['email' => 'rename-'.uniqid().'@example.test', 'status' => Account::CONNECTED]);
+        $mailbox = \Modules\HydroLink\Services\Accounts\MailboxLinker::link($account, 'bridge-test');
+        $url = route('hydrolink.accounts.rename', ['id' => $account->id]);
+
+        $this->actingAs($this->admin())->postJson($url, ['name' => '  Support   Ventes '])->assertStatus(200);
+        $this->assertSame('Support Ventes', $account->fresh()->name);
+        $this->assertSame('Support Ventes', $mailbox->fresh()->name);
+        $page = $this->actingAs($this->admin())->get(route('hydrolink.panel'))->getContent();
+        $this->assertStringContainsString('Support Ventes', $page);
+
+        // empty: back to the default names
+        $this->actingAs($this->admin())->postJson($url, ['name' => ''])->assertStatus(200);
+        $this->assertNull($account->fresh()->name);
+        $this->assertSame(strstr($account->email, '@', true), $mailbox->fresh()->name);
+
+        // FreeScout's limit and no markup
+        $this->actingAs($this->admin())->postJson($url, ['name' => str_repeat('a', 41)])->assertStatus(422);
+        $this->actingAs($this->admin())->postJson($url, ['name' => '<b>x</b>'])->assertStatus(422);
+        $this->assertNull($account->fresh()->name);
+    }
+
+    public function testNameGivenBeforeTheMailboxExistsIsUsedForIt()
+    {
+        $account = Account::create(['email' => 'early-'.uniqid().'@example.test', 'status' => Account::PENDING]);
+        \Modules\HydroLink\Services\Accounts\AccountService::rename($account, 'Facturation');
+        $this->assertNull($account->fresh()->mailbox_id);
+        $mailbox = \Modules\HydroLink\Services\Accounts\MailboxLinker::link($account->fresh(), 'bridge-test');
+        $this->assertSame('Facturation', $mailbox->name);
+    }
+
     public function testNonAdministratorsAreRefused()
     {
         $user = new \App\User();

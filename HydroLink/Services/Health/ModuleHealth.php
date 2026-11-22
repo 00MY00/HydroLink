@@ -52,11 +52,11 @@ class ModuleHealth
     ];
 
     const COLUMNS = [
-        'hydrolink_accounts' => ['email', 'mailbox_id', 'bridge_password', 'status', 'error_code', 'captcha_url', 'paused', 'api_errors'],
+        'hydrolink_accounts' => ['email', 'name', 'mailbox_id', 'bridge_password', 'status', 'error_code', 'captcha_url', 'paused', 'api_errors'],
         'hydrolink_alerts'   => ['alert_key', 'code', 'active', 'notified_at'],
     ];
 
-    const ROUTES = ['hydrolink.panel', 'hydrolink.state', 'hydrolink.settings', 'hydrolink.accounts.store', 'hydrolink.service', 'hydrolink.binary'];
+    const ROUTES = ['hydrolink.panel', 'hydrolink.state', 'hydrolink.settings', 'hydrolink.accounts.store', 'hydrolink.accounts.rename', 'hydrolink.service', 'hydrolink.binary'];
 
     const COMMANDS = ['hydrolink:tick', 'hydrolink:auth', 'hydrolink:update-binary', 'hydrolink:diagnose'];
 
