@@ -118,7 +118,7 @@
             return;
         }
         var immediate = input.type === 'checkbox' || e.type === 'change';
-        if (input.hasAttribute('data-hl-secret') && e.type !== 'change') {
+        if ((input.hasAttribute('data-hl-secret') || input.hasAttribute('data-hl-onchange')) && e.type !== 'change') {
             dirty['setting:' + key] = true;   // a secret is saved on change (leaving the field), not while typing
             return;
         }

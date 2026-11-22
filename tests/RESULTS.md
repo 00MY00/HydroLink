@@ -25,6 +25,8 @@ built by the CI is started for real.
 | Real hydroxide binary: self test, serve, IMAP/SMTP | `RealBinaryTest` | CI |
 | Panel for administrators only, autosave, validation | `PanelTest` | CI |
 | UpdateGuard health command | `PanelTest::testHealthCommandForUpdateGuard`, `testHealthFailsOnAnyCodeProblem`, `hydrolink:health --json` in `run.sh` | CI |
+| Keep-alive: read without marking read, e-mail to itself skipped by FreeScout then trashed, other address, failures, interval, "Now" | `KeepAliveTest` (test double) | CI |
+| Keep-alive with a real Proton account (does Proton count it?) | not verifiable from outside (docs/OPEN-QUESTIONS.md 10) | manual |
 | UpdateGuard probe checks (`updateguard.health_check`) | `PanelTest::testUpdateGuardProbeGetsRuntimeChecksForHydroLinkOnly` | CI |
 | Secret scan | job `secrets` (gitleaks, blocks the release) | CI |
 | Receive a mail in FreeScout, reply received by the recipient (real free account) | by hand on a test instance | to do on first install |

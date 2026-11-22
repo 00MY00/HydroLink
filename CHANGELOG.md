@@ -2,6 +2,16 @@
 
 All notable changes to HydroLink. Versions follow [semantic versioning](https://semver.org/).
 
+## [1.2.0] - 2026-11-23
+
+- Keep alive (card **Keep alive**, on by default, every 30 days): a real action on each connected account so that a
+  free Proton account is not seen as inactive (Proton deletes free accounts after 24 months without activity).
+  Methods: read the newest e-mail (default, nothing sent, unread stays unread), send an e-mail to itself (then read,
+  marked read, moved to the trash; FreeScout does not import it), send an e-mail to another address. Run by the cron
+  through hydroxide; last keep-alive and a **Now** button on each account; codes `HL-KA-01` to `HL-KA-03`.
+- README: what Proton counts as activity, and why being connected is probably but not certainly enough.
+- Migration `add_keepalive_to_hydrolink_accounts`: two nullable columns (backward-compatible).
+
 ## [1.1.0] - 2026-11-22
 
 - Rename an account: section **Rename** of its card. The name is the title of the card (the address stays below)

@@ -104,6 +104,29 @@ final class Settings
         return max(0, (int) self::get('reminder_hours', self::config('reminder_hours', 24)));
     }
 
+    public static function keepAlive(): bool
+    {
+        return (bool) self::get('keepalive', true);
+    }
+
+    /** read | self | other (Services/KeepAlive/KeepAlive.php) */
+    public static function keepAliveMethod(): string
+    {
+        $method = (string) self::get('keepalive_method', 'read');
+
+        return in_array($method, ['read', 'self', 'other'], true) ? $method : 'read';
+    }
+
+    public static function keepAliveDays(): int
+    {
+        return min(365, max(1, (int) self::get('keepalive_days', 30)));
+    }
+
+    public static function keepAliveTo(): string
+    {
+        return trim((string) self::get('keepalive_to', ''));
+    }
+
     public static function notifyRecovery(): bool
     {
         return (bool) self::get('notify_recovery', true);

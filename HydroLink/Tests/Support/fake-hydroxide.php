@@ -10,7 +10,10 @@
  *   auth twopw@example.test    needs HYDROXIDE_MAILBOX_PASSWORD (otherwise the /dev/tty error of askPass)
  *   auth wrong@example.test    "[8002] Incorrect login credentials"
  *   serve                      IMAP and SMTP on 127.0.0.1; LOGIN checks the bridge password saved by auth;
- *                              api@example.test answers an unknown Proton error
+ *                              api@example.test answers an unknown Proton error. Mailboxes in mail.json
+ *                              (SELECT, FETCH with literals, UID FETCH / STORE / MOVE), SMTP AUTH PLAIN and
+ *                              sending (a message to a signed-in account lands in its inbox, RCPT
+ *                              reject@example.test is refused); every action is written to actions.log
  *   -h                         usage
  */
 
@@ -89,6 +92,29 @@ if (!$imap || !$smtp) {
 logline('IMAP server listening on 127.0.0.1:'.$opts['imap-port']);
 logline('SMTP server listening on 127.0.0.1:'.$opts['smtp-port']);
 $clients = [];
+$mailFile = $config.'/mail.json';
+$actions = $config.'/actions.log';
+
+function mail_load($file)
+{
+    return is_file($file) ? (json_decode(file_get_contents($file), true) ?: []) : [];
+}
+
+function mail_save($file, $data)
+{
+    file_put_contents($file, json_encode($data));
+}
+
+function act($file, $text)
+{
+    file_put_contents($file, $text."\n", FILE_APPEND);
+}
+
+function raw_message($m)
+{
+    return 'Subject: '.$m['subject']."\r\nFrom: <".$m['from'].">\r\n\r\n".$m['body']."\r\n";
+}
+
 while (true) {
     $read = array_merge([$imap, $smtp], array_column($clients, 'sock'));
     $w = $x = null;
@@ -114,13 +140,64 @@ while (true) {
         }
         $line = rtrim($line, "\r\n");
         if ($clients[$id]['kind'] === 'smtp') {
-            if (stripos($line, 'EHLO') === 0) {
+            $c = &$clients[$id];
+            if (!empty($c['data'])) {
+                if ($line !== '.') {
+                    $c['body'][] = substr($line, 0, 2) === '..' ? substr($line, 1) : $line;
+                    continue;
+                }
+                $c['data'] = false;
+                $subject = '';
+                foreach ($c['body'] as $h) {
+                    if (stripos($h, 'Subject: ') === 0) {
+                        $subject = substr($h, 9);
+                    }
+                }
+                $auths = is_file($authFile) ? (json_decode(file_get_contents($authFile), true) ?: []) : [];
+                $mail = mail_load($mailFile);
+                foreach ($c['rcpt'] as $to) {
+                    act($actions, $c['user'].' sent '.$to.' '.$subject);
+                    if (isset($auths[$to])) {
+                        $mail[$to] = $mail[$to] ?? [];
+                        $uid = 1 + max(array_merge([0], array_column($mail[$to], 'uid')));
+                        $mail[$to][] = ['uid' => $uid, 'subject' => $subject, 'from' => $c['user'], 'body' => 'keep-alive', 'seen' => false];
+                    }
+                }
+                mail_save($mailFile, $mail);
+                fwrite($sock, "250 OK: queued\r\n");
+            } elseif (stripos($line, 'EHLO') === 0) {
                 fwrite($sock, "250-Hello\r\n250 AUTH PLAIN\r\n");
+            } elseif (stripos($line, 'AUTH PLAIN ') === 0) {
+                $parts = explode("\0", (string) base64_decode(substr($line, 11)));
+                $auths = is_file($authFile) ? (json_decode(file_get_contents($authFile), true) ?: []) : [];
+                $user = $parts[1] ?? '';
+                if (isset($auths[$user]) && $auths[$user] === base64_encode($parts[2] ?? '')) {
+                    $c['user'] = $user;
+                    fwrite($sock, "235 2.7.0 Authentication successful\r\n");
+                } else {
+                    fwrite($sock, "535 5.7.8 Invalid username or password\r\n");
+                }
+            } elseif (stripos($line, 'MAIL FROM:') === 0) {
+                $c['rcpt'] = [];
+                fwrite($sock, empty($c['user']) ? "530 5.7.0 Authentication required\r\n" : "250 OK\r\n");
+            } elseif (stripos($line, 'RCPT TO:') === 0) {
+                $to = trim(substr($line, 8), '<> ');
+                if ($to === 'reject@example.test') {
+                    fwrite($sock, "550 cannot send to this address\r\n");
+                } else {
+                    $c['rcpt'][] = $to;
+                    fwrite($sock, "250 OK\r\n");
+                }
+            } elseif (strtoupper($line) === 'DATA') {
+                $c['data'] = true;
+                $c['body'] = [];
+                fwrite($sock, "354 Start mail input\r\n");
             } else {
                 fwrite($sock, "221 Bye\r\n");
                 fclose($sock);
                 unset($clients[$id]);
             }
+            unset($c);
             continue;
         }
         if (preg_match('~^(\S+) LOGIN "((?:[^"\\\\]|\\\\.)*)" "((?:[^"\\\\]|\\\\.)*)"~', $line, $m)) {
@@ -132,16 +209,57 @@ while (true) {
                 fwrite($sock, $m[1]." NO [2500] Unexpected new field\r\n");
             } elseif (isset($auths[$user]) && $auths[$user] === base64_encode($pass)) {
                 logline('User "'.$user.'" logged in via IMAP');
+                $clients[$id]['user'] = $user;
                 fwrite($sock, $m[1]." OK LOGIN completed\r\n");
             } else {
                 fwrite($sock, $m[1]." NO Invalid username or password\r\n");
             }
+        } elseif (preg_match('~^(\S+) SELECT "?INBOX"?~i', $line, $m) && !empty($clients[$id]['user'])) {
+            $box = mail_load($mailFile)[$clients[$id]['user']] ?? [];
+            act($actions, $clients[$id]['user'].' select INBOX');
+            fwrite($sock, '* '.count($box)." EXISTS\r\n".$m[1]." OK [READ-WRITE] SELECT completed\r\n");
+        } elseif (preg_match('~^(\S+) (UID )?(FETCH|STORE|MOVE) (\d+)(?::(\d+))? (.*)$~i', $line, $m) && !empty($clients[$id]['user'])) {
+            $user = $clients[$id]['user'];
+            $mail = mail_load($mailFile);
+            $box = array_values($mail[$user] ?? []);
+            $byUid = $m[2] !== '';
+            $from = (int) $m[4];
+            $to = $m[5] !== '' ? (int) $m[5] : $from;
+            $out = '';
+            foreach ($box as $i => $msg) {
+                $seq = $i + 1;
+                $key = $byUid ? $msg['uid'] : $seq;
+                if ($key < $from || $key > $to) {
+                    continue;
+                }
+                $verb = strtoupper($m[3]);
+                if ($verb === 'FETCH' && stripos($m[6], 'ENVELOPE') !== false) {
+                    $out .= '* '.$seq.' FETCH (UID '.$msg['uid'].' ENVELOPE (NIL "'.addslashes($msg['subject']).'" NIL NIL NIL NIL NIL NIL NIL NIL))'."\r\n";
+                } elseif ($verb === 'FETCH') {
+                    $raw = raw_message($msg);
+                    act($actions, $user.' read '.$msg['uid'].(stripos($m[6], 'PEEK') !== false ? ' peek' : ''));
+                    $out .= '* '.$seq.' FETCH (UID '.$msg['uid'].' BODY[] {'.strlen($raw)."}\r\n".$raw.")\r\n";
+                } elseif ($verb === 'STORE') {
+                    $mail[$user][$i]['seen'] = true;
+                    act($actions, $user.' seen '.$msg['uid']);
+                    $out .= '* '.$seq." FETCH (FLAGS (\\Seen))\r\n";
+                } else {
+                    unset($mail[$user][$i]);
+                    act($actions, $user.' trash '.$msg['uid']);
+                }
+            }
+            if (isset($mail[$user])) {
+                $mail[$user] = array_values($mail[$user]);
+            }
+            mail_save($mailFile, $mail);
+            fwrite($sock, $out.$m[1].' OK '.strtoupper($m[3])." completed\r\n");
         } elseif (preg_match('~^(\S+) LOGOUT~', $line, $m)) {
             fwrite($sock, "* BYE\r\n".$m[1]." OK LOGOUT completed\r\n");
             fclose($sock);
             unset($clients[$id]);
         } else {
-            fwrite($sock, "* BAD unknown\r\n");
+            $tag = strtok($line, ' ');
+            fwrite($sock, ($tag !== false ? $tag : '*')." BAD unknown command\r\n");
         }
     }
 }

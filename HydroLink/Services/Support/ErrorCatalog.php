@@ -40,6 +40,9 @@ final class ErrorCatalog
         'HL-SVC-02' => self::ERROR,    // local SMTP does not answer
         'HL-SVC-03' => self::ERROR,    // local IMAP does not answer / login refused
         'HL-SVC-04' => self::WARNING,  // FreeScout has not fetched e-mails for a while
+        'HL-KA-01' => self::WARNING,   // keep-alive: inbox could not be opened / read
+        'HL-KA-02' => self::WARNING,   // keep-alive: e-mail could not be sent
+        'HL-KA-03' => self::WARNING,   // keep-alive: no destination address for "another address"
         'HL-VT-01' => self::WARNING,   // VirusTotal key refused
         'HL-VT-02' => self::WARNING,   // VirusTotal unavailable (quota of the day, unexpected answer)
     ];

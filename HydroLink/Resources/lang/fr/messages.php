@@ -23,6 +23,17 @@ return [
     'queued_restart' => 'Redémarrage demandé : le cron s\'en charge dans moins d\'une minute.',
 
     // accounts
+    'ka_title' => 'Garder en vie', 'ka_enable' => 'Garder les comptes actifs', 'ka_method' => 'Méthode',
+    'ka_intro' => 'Proton peut supprimer un compte gratuit après 24 mois sans activité. HydroLink fait une vraie action sur chaque compte connecté à l\'intervalle ci-dessous.',
+    'ka_m_read' => 'Lire le dernier e-mail', 'ka_m_read_hint' => 'Ouvre la boîte de réception et lit le dernier e-mail ; rien n\'est envoyé, les e-mails non lus restent non lus.',
+    'ka_m_self' => 'S\'envoyer un e-mail', 'ka_m_self_hint' => 'Envoie un court e-mail au compte lui-même, le lit, puis le met à la corbeille. Non importé par FreeScout.',
+    'ka_m_other' => 'Envoyer un e-mail à une autre adresse', 'ka_m_other_hint' => 'Envoie un court e-mail à l\'adresse ci-dessous, puis ouvre la boîte de réception.',
+    'ka_to' => 'Autre adresse (méthode « autre adresse »)', 'ka_days' => 'Tous les (jours)',
+    'ka_policy' => 'Ce que Proton compte comme activité',
+    'ka_policy_text' => 'Conditions de Proton (section 3) : se connecter sur les applications web, ordinateur ou mobile de Proton, ou, une fois connecté, utiliser un produit (ouvrir la boîte de réception, lire un e-mail, se connecter à un serveur VPN). Compté par compte, pas par adresse ; les offres payantes ne sont jamais supprimées pour inactivité ; des rappels partent vers l\'adresse de récupération 30, 15 et 7 jours avant. Proton ne dit pas si les clients tiers comme hydroxide comptent : se connecter une fois par an sur proton.me reste le seul moyen certain.',
+    'ka_last' => 'Maintenu en vie', 'ka_never' => 'pas encore', 'ka_now' => 'Maintenant',
+    'ka_queued' => 'Maintien en vie demandé : fait au prochain passage du cron (dans la minute).',
+    'ka_why_not_connected' => 'Seulement pour un compte connecté.', 'ka_st_no_address' => 'Pas d\'adresse',
     'rename' => 'Renommer', 'name' => 'Nom', 'save' => 'Enregistrer', 'renamed' => 'Nom enregistré.', 'mailbox_link' => 'Boîte FreeScout',
     'rename_hint' => 'Affiché sur cette carte et donné à la boîte FreeScout (40 caractères au plus). Vide : nom par défaut.',
     'name_too_long' => 'Le nom est limité à 40 caractères.', 'name_invalid' => 'Le nom contient des caractères non autorisés.',

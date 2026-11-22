@@ -18,6 +18,36 @@ FreeScout then fetches and sends with its own functions.
 - Installs and updates the hydroxide binary built by this repository's CI (SHA-256, optional VirusTotal, test,
   rollback).
 - Health checks and notifications (FreeScout alert e-mail, WebPush module when installed), once per change of state.
+- Keep alive (on by default, every 30 days): a real action on each connected account so that a free account is not
+  seen as inactive. See [Keep alive](#keep-alive).
+
+## Keep alive
+
+Proton's terms (section 3, "Inactive Accounts") allow deleting a **free** account after **24 consecutive months**
+without activity. Activity is "logging in to your Account on our web, desktop or mobile apps" or, "if you are already
+logged in, using one of our products (for example, accessing your inbox, reading an email, connecting to a VPN
+server, etc.)". It is counted per account, not per address. Paid plans are never deleted for inactivity. Proton
+"aims to" send reminders to the **recovery address** 30, 15 and 7 days before.
+
+**Is being connected through HydroLink enough?** Probably, but nothing guarantees it:
+
+- hydroxide does not sign in again on each IMAP login. It renews its token through the API when `serve` starts and
+  when the token expires, and FreeScout opens the inbox every minute and reads new e-mails through it. That is API
+  use that looks like "accessing your inbox", but Proton names only its own apps and says nothing about third-party
+  clients such as hydroxide or Bridge.
+- An account that receives nothing generates almost no "reading" activity.
+
+The **Keep alive** card adds a real action at a regular interval, run by the cron through hydroxide:
+
+| Method | What it does |
+|---|---|
+| Read the newest e-mail (default) | opens the inbox and reads the newest e-mail; nothing is sent, unread stays unread |
+| Send an e-mail to itself | sends a short e-mail to the account, then reads it, marks it read and moves it to the trash; FreeScout skips it |
+| Send an e-mail to another address | sends a short e-mail to the address you give, then opens the inbox |
+
+Each account shows when it was last kept alive, with a **Now** button. A failure raises `HL-KA-01` to `HL-KA-03`.
+The only certain way remains signing in once a year on proton.me with each account (and keeping a recovery address
+that you read, for Proton's reminders).
 
 ## What it does not do
 
@@ -99,6 +129,8 @@ code or the verification if asked. The mailbox appears in FreeScout, ready to re
 | HL-SVC-01 | hydroxide keeps stopping | read the logs, Restart |
 | HL-SVC-02 / 03 | local SMTP / IMAP silent | Restart |
 | HL-SVC-04 | FreeScout fetching late | check the cron |
+| HL-KA-01 / 02 | keep-alive: inbox not read / e-mail not sent | check the account and the service |
+| HL-KA-03 | keep-alive: no address for "another address" | enter the address, or another method |
 | HL-VT-01 / 02 | VirusTotal key refused / unavailable | fix the key, or wait |
 
 Each code is explained in the panel (expected, effect, action).

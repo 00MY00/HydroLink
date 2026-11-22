@@ -16,6 +16,7 @@ use Modules\HydroLink\Services\Accounts\AccountService;
  *   schedule                    (app/Console/Kernel.php)                -> hydrolink:tick and hydrolink:auth
  *   mailbox.in_active           (app/Mailbox.php, isInActive())         -> a paused account is not fetched
  *   updateguard.health_check    (UpdateGuard module, optional)          -> hydroxide, cron and accounts in its report
+ *   fetch_emails.should_save_thread (app/Console/Commands/FetchEmails.php) -> keep-alive e-mails are not tickets
  *
  * Updates: module.json declares latestVersionUrl / latestVersionZipUrl (FreeScout's Modules page and UpdateGuard);
  * hydrolink:health is the health check UpdateGuard runs after an update.
@@ -50,6 +51,23 @@ class HydroLinkServiceProvider extends ServiceProvider
         $this->registerSchedule();
         $this->registerPause();
         $this->registerUpdateGuard();
+        $this->registerKeepAliveFilter();
+    }
+
+    /** E-mails of the keep-alive (sent to the account itself or to another FreeScout mailbox) are not tickets. */
+    protected function registerKeepAliveFilter()
+    {
+        \Eventy::addFilter('fetch_emails.should_save_thread', function ($save, $data = []) {
+            try {
+                if ($save !== false && \Modules\HydroLink\Services\KeepAlive\KeepAlive::isOwnMessage((string) ($data['subject'] ?? ''))) {
+                    return false;   // FreeScout marks it read and skips it (app/Console/Commands/FetchEmails.php)
+                }
+            } catch (\Throwable $e) {
+                // never block the fetching of e-mails
+            }
+
+            return $save;
+        }, 20, 2);
     }
 
     /**

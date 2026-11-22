@@ -25,6 +25,10 @@ return [
     'auth_wait_timeout' => 600,
     'auth_request_ttl'  => 900,
 
+    // keep-alive: accounts handled per cron run, delay before a new try after an attempt (seconds)
+    'keepalive_per_tick' => 3,
+    'keepalive_retry'    => 3600,
+
     // VirusTotal public API: 4 requests per minute, 500 per day
     'vt_per_minute' => 4,
     'vt_per_day'    => 500,

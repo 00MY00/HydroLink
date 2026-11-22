@@ -116,5 +116,5 @@ test('Feature registry: every feature file implements the interface, keys unique
         }
     }
     asort($keys);
-    same(['service', 'accounts', 'binary', 'notifications', 'virustotal'], array_keys($keys), 'cards in order');
+    same(['service', 'accounts', 'keepalive', 'binary', 'notifications', 'virustotal'], array_keys($keys), 'cards in order');
 });

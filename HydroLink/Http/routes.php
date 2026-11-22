@@ -24,6 +24,7 @@ Route::group([
     Route::post('/accounts/{id}/totp', $a + ['uses' => 'AccountsController@totp'])->name('hydrolink.accounts.totp');
     Route::post('/accounts/{id}/verified', $a + ['uses' => 'AccountsController@verified'])->name('hydrolink.accounts.verified');
     Route::post('/accounts/{id}/rename', $a + ['uses' => 'AccountsController@rename'])->name('hydrolink.accounts.rename');
+    Route::post('/accounts/{id}/keepalive', $a + ['uses' => 'AccountsController@keepAlive'])->name('hydrolink.accounts.keepalive');
     Route::post('/accounts/{id}/pause', $a + ['uses' => 'AccountsController@pause'])->name('hydrolink.accounts.pause');
     Route::post('/accounts/{id}/delete', $a + ['uses' => 'AccountsController@destroy'])->name('hydrolink.accounts.delete');
     Route::get('/accounts/{id}/logs', $a + ['uses' => 'AccountsController@logs'])->name('hydrolink.accounts.logs');

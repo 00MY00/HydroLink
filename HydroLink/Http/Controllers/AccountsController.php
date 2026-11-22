@@ -69,6 +69,18 @@ class AccountsController extends Controller
         return $this->done($request, __('hydrolink::messages.renamed'));
     }
 
+    /** "Now": asks the cron for a keep-alive of this account at its next run (the panel never connects itself). */
+    public function keepAlive(Request $request, $id)
+    {
+        $account = Account::findOrFail((int) $id);
+        if ($account->status !== Account::CONNECTED) {
+            return $this->fail($request, __('hydrolink::messages.ka_why_not_connected'));
+        }
+        \Modules\HydroLink\Services\Process\State::want(['keepalive_now' => [(string) $account->id => time()]]);
+
+        return $this->done($request, __('hydrolink::messages.ka_queued'));
+    }
+
     public function pause(Request $request, $id)
     {
         $account = Account::findOrFail((int) $id);

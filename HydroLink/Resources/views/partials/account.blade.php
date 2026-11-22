@@ -73,6 +73,20 @@
         </details>
     </div>
 
+    @if ($account->status === 'connected')
+        @if ($account->keepalive_code)
+            @include('hydrolink::partials.error', ['code' => $account->keepalive_code])
+        @endif
+        <div class="hl-ka-row">
+            <span class="hl-hint">{{ __('hydrolink::messages.ka_last') }} :
+                <b>{{ $account->keepalive_at ? $account->keepalive_at->diffForHumans() : __('hydrolink::messages.ka_never') }}</b></span>
+            <form method="post" action="{{ route('hydrolink.accounts.keepalive', ['id' => $account->id]) }}" class="hl-form" data-hl-ajax>
+                {{ csrf_field() }}
+                <button type="submit" class="hl-btn hl-btn-quiet">{{ __('hydrolink::messages.ka_now') }}</button>
+            </form>
+        </div>
+    @endif
+
     <details class="hl-more">
         <summary>{{ __('hydrolink::messages.rename') }}</summary>
         <form method="post" action="{{ route('hydrolink.accounts.rename', ['id' => $account->id]) }}" class="hl-form hl-stack" data-hl-ajax data-hl-reload autocomplete="off">

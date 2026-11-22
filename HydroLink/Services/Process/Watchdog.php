@@ -37,6 +37,13 @@ final class Watchdog
             if (HealthChecker::due()) {
                 $report['health'] = HealthChecker::run();
             }
+            if (($report['service']['status'] ?? '') === 'running') {
+                try {
+                    $report['keepalive'] = \Modules\HydroLink\Services\KeepAlive\KeepAlive::run();
+                } catch (\Throwable $e) {
+                    $report['keepalive'] = ['error' => $e->getMessage()];
+                }
+            }
         }
         self::rotateLog();
         $lock->release();

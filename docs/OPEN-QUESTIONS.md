@@ -34,3 +34,10 @@ Points that could not be fully verified, and the choice made.
 
 9. **Screenshots.** README screenshots need a running instance with an account; they are to be added from the first
    real installation.
+
+10. **Does activity through hydroxide count for Proton's inactivity rule?** Proton's terms (section 3) and its support
+    page (proton.me/support/inactive-accounts, read on 2026-11-23) name signing in on Proton's own apps and using a
+    product once signed in (inbox, reading an e-mail). They do not mention Bridge, IMAP clients or third-party API
+    clients, and Proton gives no way to see an account's "last activity". The keep-alive therefore does the closest
+    real actions available through hydroxide (reading an e-mail, sending one); whether they count cannot be checked
+    from outside. Signing in once a year on proton.me stays the advice in the README.

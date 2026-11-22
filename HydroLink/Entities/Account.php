@@ -28,7 +28,7 @@ class Account extends Model
 
     protected $casts = ['paused' => 'boolean'];
 
-    protected $dates = ['checked_at', 'connected_at'];
+    protected $dates = ['checked_at', 'connected_at', 'keepalive_at'];
 
     public function setBridgePassword(string $plain): void
     {

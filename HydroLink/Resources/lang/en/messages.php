@@ -23,6 +23,17 @@ return [
     'queued_restart' => 'Restart requested: the cron handles it within a minute.',
 
     // accounts
+    'ka_title' => 'Keep alive', 'ka_enable' => 'Keep the accounts active', 'ka_method' => 'Method',
+    'ka_intro' => 'Proton may delete a free account after 24 months without activity. HydroLink does a real action on each connected account at the interval below.',
+    'ka_m_read' => 'Read the newest e-mail', 'ka_m_read_hint' => 'Opens the inbox and reads the newest e-mail; nothing is sent, unread e-mails stay unread.',
+    'ka_m_self' => 'Send an e-mail to itself', 'ka_m_self_hint' => 'Sends a short e-mail to the account itself, reads it, then moves it to the trash. Not imported by FreeScout.',
+    'ka_m_other' => 'Send an e-mail to another address', 'ka_m_other_hint' => 'Sends a short e-mail to the address below, then opens the inbox.',
+    'ka_to' => 'Other address (method "another address")', 'ka_days' => 'Every (days)',
+    'ka_policy' => 'What Proton counts as activity',
+    'ka_policy_text' => 'Proton terms (section 3): signing in on Proton\'s web, desktop or mobile apps, or, once signed in, using a product (opening the inbox, reading an e-mail, connecting to a VPN server). Counted per account, not per address; paid plans are never deleted for inactivity; reminders go to the recovery address 30, 15 and 7 days before. Proton does not say whether third-party clients such as hydroxide count: signing in once a year on proton.me remains the only certain way.',
+    'ka_last' => 'Kept alive', 'ka_never' => 'not yet', 'ka_now' => 'Now',
+    'ka_queued' => 'Keep-alive asked: done at the next run of the cron (within a minute).',
+    'ka_why_not_connected' => 'Only for a connected account.', 'ka_st_no_address' => 'No address',
     'rename' => 'Rename', 'name' => 'Name', 'save' => 'Save', 'renamed' => 'Name saved.', 'mailbox_link' => 'FreeScout mailbox',
     'rename_hint' => 'Shown on this card and given to the FreeScout mailbox (40 characters at most). Empty: default name.',
     'name_too_long' => 'The name is limited to 40 characters.', 'name_invalid' => 'The name contains characters that are not allowed.',

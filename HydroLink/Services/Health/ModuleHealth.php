@@ -46,17 +46,18 @@ class ModuleHealth
         \Modules\HydroLink\Services\Binary\BinaryManager::class,
         \Modules\HydroLink\Services\Health\HealthChecker::class,
         \Modules\HydroLink\Services\Notify\Notifier::class,
+        \Modules\HydroLink\Services\KeepAlive\KeepAlive::class,
         \Modules\HydroLink\Http\Controllers\PanelController::class,
         \Modules\HydroLink\Http\Controllers\AccountsController::class,
         \Modules\HydroLink\Http\Controllers\SettingsController::class,
     ];
 
     const COLUMNS = [
-        'hydrolink_accounts' => ['email', 'name', 'mailbox_id', 'bridge_password', 'status', 'error_code', 'captcha_url', 'paused', 'api_errors'],
+        'hydrolink_accounts' => ['email', 'name', 'mailbox_id', 'bridge_password', 'status', 'error_code', 'captcha_url', 'paused', 'api_errors', 'keepalive_at', 'keepalive_code'],
         'hydrolink_alerts'   => ['alert_key', 'code', 'active', 'notified_at'],
     ];
 
-    const ROUTES = ['hydrolink.panel', 'hydrolink.state', 'hydrolink.settings', 'hydrolink.accounts.store', 'hydrolink.accounts.rename', 'hydrolink.service', 'hydrolink.binary'];
+    const ROUTES = ['hydrolink.panel', 'hydrolink.state', 'hydrolink.settings', 'hydrolink.accounts.store', 'hydrolink.accounts.rename', 'hydrolink.accounts.keepalive', 'hydrolink.service', 'hydrolink.binary'];
 
     const COMMANDS = ['hydrolink:tick', 'hydrolink:auth', 'hydrolink:update-binary', 'hydrolink:diagnose'];
 
